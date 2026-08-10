@@ -3,7 +3,7 @@ import string
 
 from pyrogram import filters
 from pyrogram.enums import ChatMemberStatus
-from pyrogram.errors.exceptions.bad_request_400 import MessageIdInvalid
+from pyrogram.errors.exceptions.bad_request_400 import MessageIdInvalid, MessageNotModified
 from pyrogram.types import InlineKeyboardMarkup, InputMediaPhoto, Message
 from pytgcalls.exceptions import NoActiveGroupCall
 
@@ -662,9 +662,12 @@ async def slider_queries(client, CallbackQuery, _):
                 duration_min,
             ),
         )
-        return await CallbackQuery.edit_message_media(
-            media=med, reply_markup=InlineKeyboardMarkup(buttons)
-        )
+        try:
+            return await CallbackQuery.edit_message_media(
+                media=med, reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        except MessageNotModified:
+            return
     elif what == "B":
         query_type = 9 if rtype == 0 else int(rtype - 1)
         try:
@@ -680,6 +683,9 @@ async def slider_queries(client, CallbackQuery, _):
                 duration_min,
             ),
         )
-        return await CallbackQuery.edit_message_media(
-            media=med, reply_markup=InlineKeyboardMarkup(buttons)
-        )
+        try:
+            return await CallbackQuery.edit_message_media(
+                media=med, reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        except MessageNotModified:
+            return
