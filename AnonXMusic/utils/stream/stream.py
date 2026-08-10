@@ -33,9 +33,11 @@ async def stream(
         return
     if forceplay:
         await Anony.force_stop_stream(chat_id)
+
     if streamtype == "playlist":
         msg = f"{_['play_19']}\n\n"
         count = 0
+        position = 0
         for search in result:
             if int(count) == config.PLAYLIST_FETCH_LIMIT:
                 continue
@@ -47,7 +49,7 @@ async def stream(
                     thumbnail,
                     vidid,
                 ) = await YouTube.details(search, False if spotify else True)
-            except:
+            except Exception:
                 continue
             if str(duration_min) == "None":
                 continue
@@ -65,7 +67,7 @@ async def stream(
                     user_id,
                     "video" if video else "audio",
                 )
-                position = len(db.get(chat_id)) - 1
+                position = len(db.get(chat_id, [])) - 1
                 count += 1
                 msg += f"{count}. {title[:70]}\n"
                 msg += f"{_['play_20']} {position}\n\n"
@@ -77,7 +79,7 @@ async def stream(
                     file_path, direct = await YouTube.download(
                         vidid, mystic, video=status, videoid=True
                     )
-                except:
+                except Exception:
                     raise AssistantErr(_["play_14"])
                 await Anony.join_call(
                     chat_id,
@@ -98,7 +100,7 @@ async def stream(
                     "video" if video else "audio",
                     forceplay=forceplay,
                 )
-                img = await get_thumb(vidid,user_id)
+                img = await get_thumb(vidid, user_id)
                 button = stream_markup(_, chat_id)
                 run = await app.send_photo(
                     original_chat_id,
@@ -130,6 +132,7 @@ async def stream(
                 caption=_["play_21"].format(position, link),
                 reply_markup=upl,
             )
+
     elif streamtype == "youtube":
         link = result["link"]
         vidid = result["vidid"]
@@ -141,7 +144,7 @@ async def stream(
             file_path, direct = await YouTube.download(
                 vidid, mystic, videoid=True, video=status
             )
-        except:
+        except Exception:
             raise AssistantErr(_["play_14"])
         if await is_active_chat(chat_id):
             await put_queue(
@@ -155,7 +158,7 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id, [])) - 1
             button = aq_markup(_, chat_id)
             await app.send_message(
                 chat_id=original_chat_id,
@@ -184,7 +187,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await get_thumb(vidid,user_id)
+            img = await get_thumb(vidid, user_id)
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
@@ -199,6 +202,7 @@ async def stream(
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
+
     elif streamtype == "soundcloud":
         file_path = result["filepath"]
         title = result["title"]
@@ -215,7 +219,7 @@ async def stream(
                 user_id,
                 "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id, [])) - 1
             button = aq_markup(_, chat_id)
             await app.send_message(
                 chat_id=original_chat_id,
@@ -249,6 +253,7 @@ async def stream(
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
     elif streamtype == "telegram":
         file_path = result["path"]
         link = result["link"]
@@ -267,7 +272,7 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id, [])) - 1
             button = aq_markup(_, chat_id)
             await app.send_message(
                 chat_id=original_chat_id,
@@ -301,6 +306,7 @@ async def stream(
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
     elif streamtype == "live":
         link = result["link"]
         vidid = result["vidid"]
@@ -320,7 +326,7 @@ async def stream(
                 user_id,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id, [])) - 1
             button = aq_markup(_, chat_id)
             await app.send_message(
                 chat_id=original_chat_id,
@@ -352,7 +358,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await get_thumb(vidid,user_id)
+            img = await get_thumb(vidid, user_id)
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
@@ -367,6 +373,7 @@ async def stream(
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
+
     elif streamtype == "index":
         link = result
         title = "ɪɴᴅᴇx ᴏʀ ᴍ3ᴜ8 ʟɪɴᴋ"
@@ -382,7 +389,7 @@ async def stream(
                 link,
                 "video" if video else "audio",
             )
-            position = len(db.get(chat_id)) - 1
+            position = len(db.get(chat_id, [])) - 1
             button = aq_markup(_, chat_id)
             await mystic.edit_text(
                 text=_["queue_4"].format(position, title[:27], duration_min, user_name),
@@ -417,4 +424,7 @@ async def stream(
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
-            await mystic.delete()
+            try:
+                await mystic.delete()
+            except Exception:
+                pass
